@@ -255,7 +255,7 @@ class WriteCounter:
         ## @property withwrite
         # Result will be stored here: Number of transactions containing writes.
         self.withwrite = 0
-    
+
     ##
     # Analyzes all transactions currently stored in this object.
     # Note that calling this two times might well double your result.
@@ -312,6 +312,9 @@ def make_transaction_splitter():
       a.autocommit = False
     return a
 
+def wrap_print(arg):
+    print(arg.rstrip("\r\n"))
+
 
 def main():
     ##
@@ -320,8 +323,11 @@ def main():
     parser = argparse.ArgumentParser(
         description="A tool to determine the write ratio of SQL script, group SQL queries by transaction, and other purposes.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument("action", choices=["writeratio", "split"],
-                        help="Select what to do. writeratio calculates the percentage of writes in the log. split writes each transaction to its own file.")
+    parser.add_argument("action", choices=["writeratio", "split", "print"],
+                        help="Select what to do.\n" +
+                        "writeratio calculates the percentage of writes in the log.\n" +
+                        "split writes each transaction to its own file.\n" +
+                        "print just echoes the SQL script (after any specified preprocessing has been applied)")
     parser.add_argument("--base", "-b", default="transaction", choices=["transaction", "statement"],
                         help="Whether to use whole transactions or single statements as base blocks of information, where applicable.")
     parser.add_argument("--autocommit", "-c", default="yes", choices=["yes", "no"],
@@ -397,6 +403,12 @@ def main():
             for line in transaction:
                 file.write(line)
             counter += 1
+
+    if args.action == "print":
+        p = make_fileparser()
+        p.linecallback = wrap_print
+        p.readall()
+
 
 if __name__== "__main__":
    main()
