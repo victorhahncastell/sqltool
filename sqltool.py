@@ -297,6 +297,26 @@ class WriteCounter:
             return True
 
 
+class PrintWriter:
+    def __init__(self, parser):
+        self.parser = parser
+        global args
+        if args.output is not None:
+            self.file = open(args.output, 'w')
+        else:
+            self.file = None
+
+        self.parser.linecallback = self.write_line
+        self.parser.readall()
+
+    def write_line(self, text):
+        text = text.rstrip("\r\n")
+        if self.file is not None:
+            self.file.write(text + "\n")
+        else:
+            print(text)
+
+
 # HELPER FUNCTIONS
 def make_fileparser():
     p = FileParser(preformat=args.preformat)
@@ -311,9 +331,6 @@ def make_transaction_splitter():
     if args.autocommit == "no":
       a.autocommit = False
     return a
-
-def wrap_print(arg):
-    print(arg.rstrip("\r\n"))
 
 
 def main():
@@ -405,9 +422,8 @@ def main():
             counter += 1
 
     if args.action == "print":
-        p = make_fileparser()
-        p.linecallback = wrap_print
-        p.readall()
+        parser = make_fileparser()
+        writer = PrintWriter(parser)
 
 
 if __name__== "__main__":
